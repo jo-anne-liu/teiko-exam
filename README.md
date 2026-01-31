@@ -20,7 +20,7 @@
 ``
 
 .devcontainer/Dockerfile
-``
+```
 # Use the official Python image (choose the version you prefer)
 FROM python:3.11-slim
 
@@ -46,15 +46,17 @@ WORKDIR /workspaces/${PWD##*/}
 
 # Switch to the user for the rest of the steps
 USER $USERNAME
-``
+```
 
 requirements.txt
+```
 pandas>=2.0
 numpy>=1.24
 scipy>=1.10
 statsmodels>=0.14
 seaborn>=0.13
 matplotlib>=3.8
+```
 
 ## Explanation of Relational Schema
 
