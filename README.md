@@ -58,6 +58,13 @@ statsmodels>=0.14
 seaborn>=0.13
 matplotlib>=3.8
 ```
+3. Launch codespace
+4. Verify that the csv file is in the directory: ls -l *.csv
+5. Run part 1: python part1.py cell_counts.csv loblaw_study.db
+6. Run part 2: python part2.py loblaw_study.db
+7. Run part 3: python part3.py frequencies.csv --db loblaw_study.db --out stats_results.csv --plot pbmc_boxplot.png
+8. Run part 4: python part4.py loblaw_study.db
+
 
 ## Explanation of Relational Schema
 
