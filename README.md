@@ -5,7 +5,7 @@
 2. Create a folder called .devcontainer at the root of the repo and add two files:
 
 .devcontainer/devcontainer.json
-``
+```
 {
   "name": "Loblaw Study Python Env",
   "dockerFile": "Dockerfile",
@@ -18,7 +18,7 @@
   ],
   "postCreateCommand": "pip install -r requirements.txt"
 }
-``
+```
 
 .devcontainer/Dockerfile
 ```
