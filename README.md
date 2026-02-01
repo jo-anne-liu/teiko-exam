@@ -2,66 +2,10 @@
 
 ## Instructions for Running
 1. Add files "cell-count.csv" and "main.py" to GitHub repository.
-2. Create a folder called .devcontainer at the root of the repo and add two files:
-
-.devcontainer/devcontainer.json
-```
-{
-  "name": "Loblaw Study Python Env",
-  "dockerFile": "Dockerfile",
-  "settings": {
-    "terminal.integrated.shell.linux": "/bin/bash"
-  },
-  "extensions": [
-    "ms-python.python",
-    "ms-toolsai.jupyter"
-  ],
-  "postCreateCommand": "pip install -r requirements.txt"
-}
-```
-
-.devcontainer/Dockerfile
-```
-# Use the official Python image (choose the version you prefer)
-FROM python:3.11-slim
-
-# Install OS‑level dependencies needed by scientific packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        build-essential \
-        gcc \
-        libatlas-base-dev \
-        gfortran \
-        libblas-dev \
-        liblapack-dev \
-        libffi-dev \
-        && rm -rf /var/lib/apt/lists/*
-
-# Create a non‑root user (optional but nice)
-ARG USERNAME=vscode
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
-RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
-
-WORKDIR /workspaces/${PWD##*/}
-
-# Switch to the user for the rest of the steps
-USER $USERNAME
-```
-
-requirements.txt
-```
-pandas>=2.0
-numpy>=1.24
-scipy>=1.10
-statsmodels>=0.14
-seaborn>=0.13
-matplotlib>=3.8
-```
-3. Launch codespace
-4. Verify that the csv file is in the directory: ls -l *.csv
-5. Run: python main.py path/to/cell-count.csv loblaw_study.db
-6. Outputs will be files `melanoma_samples_per_project.csv`, `melanoma_responders_vs_non.csv`, `melanoma_gender_counts.csv`, `stat_comparison.csv`, `pbmc_boxplot.png`, `frequencies.csv`.
+2. Launch codespace
+3. Verify that the csv file is in the directory: ls -l *.csv
+4. Run: python main.py path/to/cell-count.csv loblaw_study.db
+5. Outputs will be files `melanoma_samples_per_project.csv`, `melanoma_responders_vs_non.csv`, `melanoma_gender_counts.csv`, `stat_comparison.csv`, `pbmc_boxplot.png`, `frequencies.csv`.
 
 
 
