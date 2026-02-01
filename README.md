@@ -68,8 +68,37 @@ matplotlib>=3.8
 
 ## Explanation of Relational Schema
 
+### Tables and explanations
+* patients: The composite key guarantees uniqueness across projects (the same subject ID could appear in different studies, so we prepend the project name).
+* samples: One row per biological specimen collected from a patient. A patient can contribute many samples (different time points, treatments, tissue types).
+* cell_types:	Master lookup table for every immune‑cell population you ever measure (e.g., b_cell, cd8_t_cell). Adding a new marker only means inserting a new row here.
+* measurements:	The numeric observation: how many cells of a given type were counted in a given sample. The (sample_id, cell_type_id) pair is declared UNIQUE so you never store duplicate counts for the same cell type in the same sample.
+
+### Visual relationship diagram
+
+patients 1 ──< samples >───* measurements *───> cell_types
+   ^                                   ^
+   |                                   |
+   +-----------------------------------+
+         (patient_id)            (sample_id)
+
+### Rationale
+* Separate tables (normalization)	eliminates redundancy (e.g., patient age is stored once, not repeated for every cell‑type measurement) and reduces storage, prevents contradictory records, and makes updates trivial.
+* Composite patient_id (project_subject) guarantees global uniqueness across projects. If two studies happen to label a subject “001”, the prefix keeps them distinct without needing an artificial surrogate key.
+* SQLite will reject a measurement that refers to a non‑existent sample, and a sample that refers to a non‑existent patient. This protects from accidental typos or incomplete imports.
+* `cell_types` lookup table	decouples the list of markers from the measurements. Adding a new marker (e.g., regulatory_t_cell) is a single INSERT into cell_types; the loading loop automatically discovers the new ID via _cell_type_id. No code changes needed.
+* UNIQUE(sample_id, cell_type_id) in measurements	guarantees there is at most one count per cell type per sample. If you re‑run the loader on the same CSV, the INSERT OR REPLACE will simply overwrite the old value rather than create duplicates.
+* Integer primary keys (AUTOINCREMENT) for surrogate tables	promotes fast indexing and look‑ups. Integer PKs are compact and SQLite can use them as rowids, which speeds up joins.
+* Storing time_from_treatment_start as an integer	makes range queries cheap (WHERE time_from_treatment_start BETWEEN 0 AND 30). It also enables easy grouping by time bins in downstream analysis.
+* Explicit sample_type column	allows you to filter on tissue source (e.g., PBMC, tumor, blood) without having to parse column names. This is essential for analyses that are tissue‑specific.
+
 ## Overview of Code Structure
-Each `.py` file completes a part of the exam.
+Each `.py` file completes a part of the exam. I structured the code this way so that we can stop at each step and troubleshoot if necessary. The intermediate results are preserved in files so the entire pipeline doesn't need to be run for later results in the pipeline. Furthermore, dividing the code into functions allows us to optimize the runtime of the function. 
+
+For scalability, SQLite efficiently handles data with millions of rows. Batch inserts inside a single transaction (with conn: in `part1.py`) dramatically speeds up the initial load.  `part2.py` and `part3.py` leverage group‑by operations that are far faster than Python loops.
+Scripts open connections only when needed and close them promptly, keeping the memory footprint modest.
+
+Keeping all the code in Python, a freely available coding language, makes the pipeline accessible for all people. The minimal packages also make the code more accessible. 
 
 ### part1.py
 * Parses the cell-count.csv file and populates a SQLite database
