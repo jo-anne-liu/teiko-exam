@@ -1,4 +1,4 @@
-# teiko-exam
+# Teiko Exam for Bioinformatics Engineer
 
 ## Instructions for Running
 1. Add files "cell-count.csv," "part1.py," "part2.py," "part3.py," "part4.py," and "part5.py" to GitHub repository.
@@ -69,6 +69,22 @@ matplotlib>=3.8
 ## Explanation of Relational Schema
 
 ## Overview of Code Structure
+Each `.py` file completes a part of the exam.
+
+### part1.py
+* Parses the cell-count.csv file and populates a SQLite database
+
+### part2.py
+* Reads the database, flattens the relational model into a pandas DataFrame, and computes per‑sample total cell counts and the relative frequency of each cell type.
+
+### part3.py
+* Performs statistical comparisons of those frequencies between responders (response=="yes") and non‑responders (response=="no"), restricted to PBMC samples. Produces a results table and a box‑plot.
+
+### part4.py
+* Extracts a very specific subset: baseline (time = 0) melanoma PBMC samples treated with miraclib. Summarises sample counts per project, responder counts, and gender distribution.
+
+### part5.py
+* Runs a single aggregated query: average B‑cell count for male melanoma responders at baseline (time = 0).
 
 ## Dashboard Link: 
 * https://jo-anne-liu.github.io/teiko.html
