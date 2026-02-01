@@ -60,7 +60,7 @@ matplotlib>=3.8
 ```
 3. Launch codespace
 4. Verify that the csv file is in the directory: ls -l *.csv
-5. Run part 1: python main.py path/to/cell-count.csv loblaw_study.db
+5. Run: python main.py path/to/cell-count.csv loblaw_study.db
 6. Outputs will be files `melanoma_samples_per_project.csv`, `melanoma_responders_vs_non.csv`, `melanoma_gender_counts.csv`, `stat_comparison.csv`, `pbmc_boxplot.png`, `frequencies.csv`.
 
 
