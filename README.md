@@ -74,14 +74,6 @@ matplotlib>=3.8
 * cell_types:	Master lookup table for every immune‑cell population you ever measure (e.g., b_cell, cd8_t_cell). Adding a new marker only means inserting a new row here.
 * measurements:	The numeric observation: how many cells of a given type were counted in a given sample. The (sample_id, cell_type_id) pair is declared UNIQUE so you never store duplicate counts for the same cell type in the same sample.
 
-### Visual relationship diagram
-
-patients 1 ──< samples >───* measurements *───> cell_types
-   ^                                   ^
-   |                                   |
-   +-----------------------------------+
-         (patient_id)            (sample_id)
-
 ### Rationale
 * Separate tables (normalization)	eliminates redundancy (e.g., patient age is stored once, not repeated for every cell‑type measurement) and reduces storage, prevents contradictory records, and makes updates trivial.
 * Composite patient_id (project_subject) guarantees global uniqueness across projects. If two studies happen to label a subject “001”, the prefix keeps them distinct without needing an artificial surrogate key.
