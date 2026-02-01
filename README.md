@@ -63,6 +63,10 @@ matplotlib>=3.8
 5. Run part 1: python main.py path/to/cell-count.csv loblaw_study.db
 6. Outputs will be files `melanoma_samples_per_project.csv`, `melanoma_responders_vs_non.csv`, `melanoma_gender_counts.csv`, `stat_comparison.csv`, `pbmc_boxplot.png`, `frequencies.csv`.
 
+
+
+
+
 ## Explanation of Relational Schema
 
 ### Tables and explanations
@@ -95,26 +99,85 @@ matplotlib>=3.8
 * Statistical modelling (mixed‑effects, survival):	Export the joined tidy table (SELECT … FROM …) to a Pandas DataFrame, then feed it to statsmodels or scikit‑learn. Because the DB is already normalized, the exported DataFrame is tidy (one row per measurement) and ready for pivoting or aggregation.
 * Feature engineering (e.g., ratios of cell types):	Compute derived columns on the fly in SQL (COUNT(b_cell)/COUNT(cd8_t_cell) AS b_cd8_ratio) or in Pandas after export. The relational layout makes it trivial to pivot the long table into a wide matrix (pivot_table(index='sample', columns='cell_type', values='count')).
 
+
+
+
 ## Overview of Code Structure
-Each `.py` file completes a part of the exam. I structured the code this way so that we can stop at each step and troubleshoot if necessary. The intermediate results are preserved in files so the entire pipeline doesn't need to be run for later results in the pipeline. Furthermore, dividing the code into functions allows us to optimize the runtime of the function. 
+I structured the code so each step is printed and we can troubleshoot. Furthermore, dividing the code into functions allows us to optimize the runtime of the function. We've stored the results in files so they can be viewed later.
 
-For scalability, SQLite efficiently handles data with millions of rows. Batch inserts inside a single transaction (with conn: in `part1.py`) dramatically speeds up the initial load.  `part2.py` and `part3.py` leverage group‑by operations that are far faster than Python loops.
-Scripts open connections only when needed and close them promptly, keeping the memory footprint modest.
+The skeleton of the file is as follows
+```
+main.py
+│
+├─ Imports & constants
+│
+├─ ── Part 1 – CSV → SQLite loader (load_csv, _cell_type_id)
+│
+├─ ── Part 2 – Frequency builder (load_flat_dataframe, compute_frequencies)
+│
+├─ ── Part 3 – PBMC statistical analysis
+│     │   • DB‑to‑DataFrame loader (load_from_db)
+│     │   • CSV‑to‑DataFrame loader (load_from_csv)
+│     │   • Filtering & cleaning helpers (filter_pbmc, clean_response_column)
+│     │   • compare_groups (Mann‑Whitney / t‑test + FDR)
+│     │   • plot_boxplot (Seaborn box‑plot)
+│
+├─ ── Part 4 – Melanoma‑PBMC baseline summary
+│     │   • SQL helper (sql_to_df)
+│     │   • get_baseline_melanoma_pbmc
+│     │   • samples_per_project, responders_vs_non, gender_counts
+│
+├─ ── Part 5 – One‑line B‑cell query (raw SQL at bottom)
+│
+└─ main() – orchestrator
+      • parses CLI args (csv_path, db_path)
+      • runs the five steps in order
+      • writes CSV/PNG artefacts
+      • prints a final status message
+```
 
-### part1.py
-* Parses the cell-count.csv file and populates a SQLite database
+### Part 1 – CSV → SQLite (load_csv)
+* Reads the raw CSV with csv.DictReader.
+* Builds the normalized schema (patients, samples, cell_types, measurements).
+* Uses _cell_type_id to guarantee a unique ID for each cell‑type string.
+* Inserts rows with INSERT OR IGNORE / INSERT OR REPLACE to keep the operation idempotent.
+* Commits once per file (single transaction) → fast bulk load.
 
-### part2.py
-* Reads the database, flattens the relational model into a pandas DataFrame, and computes per‑sample total cell counts and the relative frequency of each cell type.
+### Part 2 – Frequency computation
+* load_flat_dataframe pulls the long table (one row per measurement) via a single SQL join.
+* compute_frequencies aggregates counts per sample, merges totals back, and calculates % per cell type.
 
-### part3.py
-* Performs statistical comparisons of those frequencies between responders (response=="yes") and non‑responders (response=="no"), restricted to PBMC samples. Produces a results table and a box‑plot.
+### Part 3 – Statistical comparison
+* load_from_db builds the same long table but also adds total_count in‑SQL (window function) and pre‑computes %.
+* filter_pbmc restricts analysis to PBMC samples.
+* clean_response_column normalises the response field and drops any unexpected values.
+* compare_groups iterates over each cell‑type, splits responders vs. non‑responders, runs either Mann‑Whitney U or Welch’s t‑test, computes an effect size, and applies a multiple‑testing correction (multipletests).
+* plot_boxplot draws a Seaborn box‑plot of percentages by response and optionally saves it.
 
-### part4.py
-* Extracts a very specific subset: baseline (time = 0) melanoma PBMC samples treated with miraclib. Summarises sample counts per project, responder counts, and gender distribution.
+### Part 4 – Melanoma baseline summary
+* get_baseline_melanoma_pbmc extracts the subset defined by condition = ‘melanoma’, sample_type = ‘PBMC’, time = 0, treatment = ‘miraclib’.
+* samples_per_project, responders_vs_non, gender_counts each produce a tidy summary table (project counts, responder counts, gender distribution).
 
-### part5.py
-* Runs a single aggregated query: average B‑cell count for male melanoma responders at baseline (time = 0).
+### Part 5 – One‑line B‑cell query
+* A raw SQL statement (parameterised by TARGET_CELL_TYPE) computes the average B‑cell count for melanoma‑male responders at baseline.
+* Executed after the main pipeline finishes; the result is printed with two‑decimal formatting.
+
+### `main()` – Orchestrator
+* Argument parsing (csv_path, db_path).
+* Step 1 – call load_csv.
+* Step 2 – compute frequencies, write frequencies.csv.
+* Step 3 – load full DB, filter/clean, run compare_groups, write stat_comparison.csv, save pbmc_boxplot.png.
+* Step 4 – connect to DB, pull melanoma subset, write three CSV summary tables.
+* Step 5 – run the B‑cell query (currently commented out).
+* Print a final “All steps completed” banner.
+
+### Why is the Code Written this Way?
+* Reproducibility – Every run produces the same set of artefacts (*.db, *.csv, *.png). You can version‑control the script and the generated files become a complete audit trail.
+* Modularity – Want to swap the statistical test? Just change the test= argument in compare_groups. Need a different filter (e.g., another tissue type)? Modify filter_pbmc or add a new filter function without touching the rest of the code.
+* Scalability – The bulk CSV load is wrapped in a single SQLite transaction, which is fast even for millions of rows. Later you could replace the CSV reader with pandas.read_csv for even larger files.
+* Extensibility – Because each part returns a pandas.DataFrame, you can pipe the output into any downstream analysis (machine‑learning models, additional visualisations, export to Excel, etc.).
+* Transparency – All SQL statements are explicit strings; you can inspect or log them for debugging or for sharing with collaborators who prefer raw SQL.
+
 
 ## Dashboard Link: 
 * https://jo-anne-liu.github.io/teiko.html
