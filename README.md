@@ -1,7 +1,7 @@
 # Teiko Exam for Bioinformatics Engineer
 
 ## Instructions for Running
-1. Add files "cell-count.csv," "part1.py," "part2.py," "part3.py," "part4.py," and "part5.py" to GitHub repository.
+1. Add files "cell-count.csv" and "main.py" to GitHub repository.
 2. Create a folder called .devcontainer at the root of the repo and add two files:
 
 .devcontainer/devcontainer.json
@@ -60,11 +60,8 @@ matplotlib>=3.8
 ```
 3. Launch codespace
 4. Verify that the csv file is in the directory: ls -l *.csv
-5. Run part 1: python part1.py cell_counts.csv loblaw_study.db
-6. Run part 2: python part2.py loblaw_study.db
-7. Run part 3: python part3.py frequencies.csv --db loblaw_study.db --out stats_results.csv --plot pbmc_boxplot.png
-8. Run part 4: python part4.py loblaw_study.db
-9. Run part 5: python part5.py
+5. Run part 1: python main.py path/to/cell-count.csv loblaw_study.db
+6. Outputs will be files `melanoma_samples_per_project.csv`, `melanoma_responders_vs_non.csv`, `melanoma_gender_counts.csv`, `stat_comparison.csv`, `pbmc_boxplot.png`, `frequencies.csv`.
 
 ## Explanation of Relational Schema
 
@@ -91,20 +88,18 @@ matplotlib>=3.8
 * To add new cell‑type markers, insert a new row into cell_types. The loader’s _cell_type_id will fetch the new ID automatically.	Keep a master list of allowed cell types in a separate config file (YAML/JSON) if you want to validate incoming CSVs before loading.
 
 ### Example new analytics to perform
-* Longitudinal trajectories (e.g., cell‑type counts over time)	Query measurements joined to samples and filter on patient_id and time_from_treatment_start. Example: SELECT time_from_treatment_start, ct.cell_type, m.count FROM measurements m JOIN samples s ON m.sample_id=s.sample_id JOIN cell_types ct ON m.cell_type_id=ct.cell_type_id WHERE s.patient_id='projA_001' ORDER BY time_from_treatment_start;
-Cross‑project meta‑analysis	Group by project in the patients table, then join to measurements. Example: SELECT project, ct.cell_type, AVG(m.count) AS mean_count FROM measurements m JOIN samples s ON m.sample_id=s.sample_id JOIN patients p ON s.patient_id=p.patient_id JOIN cell_types ct ON m.cell_type_id=ct.cell_type_id GROUP BY project, ct.cell_type;
-Multi‑omics integration (e.g., linking gene expression stored elsewhere)	Store the external data in a separate SQLite database or a linked table (e.g., gene_expression). Use the same patient_id/sample_id keys to join across databases.
-Sub‑cohort extraction (e.g., “all melanoma PBMC baseline samples”)	Exactly the query used in part4.py. The same pattern scales: just add more predicates (WHERE condition='melanoma' AND sample_type='PBMC' AND time_from_treatment_start=0).
-Statistical modelling (mixed‑effects, survival)	Export the joined tidy table (SELECT … FROM …) to a Pandas DataFrame, then feed it to statsmodels or scikit‑learn. Because the DB is already normalized, the exported DataFrame is tidy (one row per measurement) and ready for pivoting or aggregation.
-Feature engineering (e.g., ratios of cell types)	Compute derived columns on the fly in SQL (COUNT(b_cell)/COUNT(cd8_t_cell) AS b_cd8_ratio) or in Pandas after export. The relational layout makes it trivial to pivot the long table into a wide matrix (pivot_table(index='sample', columns='cell_type', values='count')).
+* Longitudinal trajectories (e.g., cell‑type counts over time): Query measurements joined to samples and filter on patient_id and time_from_treatment_start. Example: SELECT time_from_treatment_start, ct.cell_type, m.count FROM measurements m JOIN samples s ON m.sample_id=s.sample_id JOIN cell_types ct ON m.cell_type_id=ct.cell_type_id WHERE s.patient_id='projA_001' ORDER BY time_from_treatment_start;
+* Cross‑project meta‑analysis:	Group by project in the patients table, then join to measurements. Example: SELECT project, ct.cell_type, AVG(m.count) AS mean_count FROM measurements m JOIN samples s ON m.sample_id=s.sample_id JOIN patients p ON s.patient_id=p.patient_id JOIN cell_types ct ON m.cell_type_id=ct.cell_type_id GROUP BY project, ct.cell_type;
+* Multi‑omics integration (e.g., linking gene expression stored elsewhere): Store the external data in a separate SQLite database or a linked table (e.g., gene_expression). Use the same patient_id/sample_id keys to join across databases.
+* Sub‑cohort extraction (e.g., “all melanoma PBMC baseline samples”): Exactly the query used in part4.py. The same pattern scales: just add more predicates (WHERE condition='melanoma' AND sample_type='PBMC' AND time_from_treatment_start=0).
+* Statistical modelling (mixed‑effects, survival):	Export the joined tidy table (SELECT … FROM …) to a Pandas DataFrame, then feed it to statsmodels or scikit‑learn. Because the DB is already normalized, the exported DataFrame is tidy (one row per measurement) and ready for pivoting or aggregation.
+* Feature engineering (e.g., ratios of cell types):	Compute derived columns on the fly in SQL (COUNT(b_cell)/COUNT(cd8_t_cell) AS b_cd8_ratio) or in Pandas after export. The relational layout makes it trivial to pivot the long table into a wide matrix (pivot_table(index='sample', columns='cell_type', values='count')).
 
 ## Overview of Code Structure
 Each `.py` file completes a part of the exam. I structured the code this way so that we can stop at each step and troubleshoot if necessary. The intermediate results are preserved in files so the entire pipeline doesn't need to be run for later results in the pipeline. Furthermore, dividing the code into functions allows us to optimize the runtime of the function. 
 
 For scalability, SQLite efficiently handles data with millions of rows. Batch inserts inside a single transaction (with conn: in `part1.py`) dramatically speeds up the initial load.  `part2.py` and `part3.py` leverage group‑by operations that are far faster than Python loops.
 Scripts open connections only when needed and close them promptly, keeping the memory footprint modest.
-
-Keeping all the code in Python, a freely available coding language, makes the pipeline accessible for all people. The minimal packages also make the code more accessible. 
 
 ### part1.py
 * Parses the cell-count.csv file and populates a SQLite database
