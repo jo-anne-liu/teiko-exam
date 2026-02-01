@@ -1,0 +1,12 @@
+{
+  "name": "Loblaw Study Python Env",
+  "dockerFile": "Dockerfile",
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "extensions": [
+    "ms-python.python",
+    "ms-toolsai.jupyter"
+  ],
+  "postCreateCommand": "pip install -r requirements.txt"
+}
