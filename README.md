@@ -84,6 +84,12 @@ matplotlib>=3.8
 * Storing time_from_treatment_start as an integer	makes range queries cheap (WHERE time_from_treatment_start BETWEEN 0 AND 30). It also enables easy grouping by time bins in downstream analysis.
 * Explicit sample_type column	allows you to filter on tissue source (e.g., PBMC, tumor, blood) without having to parse column names. This is essential for analyses that are tissue‑specific.
 
+### Scaling for hundreds of projects and thousands of samples
+* SQLite can comfortably hold tens of millions of rows (especially when indexed). With ~1 000 patients × 10 samples/patient × 10 cell types ≈ 100 000 measurement rows, the size of the data well within limits. To handle large amounts of data, keep the DB on SSD storage (GitHub Codespaces, local SSD, or a mounted volume).
+* Primary‑key indexes (patient_id, sample_id, cell_type_id) make look‑ups O(log N). Joins on these keys stay fast even as N grows. To scale up, eriodically run VACUUM; ANALYZE; (or let SQLite auto‑vacuum) to keep the file compact and the query planner optimal.
+* To add new projects, just insert new rows into patients (with a new project prefix) and corresponding samples. No schema alteration needed.	Use bulk INSERT statements or executemany for efficiency when loading many rows at once.
+* To add new cell‑type markers, insert a new row into cell_types. The loader’s _cell_type_id will fetch the new ID automatically.	Keep a master list of allowed cell types in a separate config file (YAML/JSON) if you want to validate incoming CSVs before loading.
+
 ## Overview of Code Structure
 Each `.py` file completes a part of the exam. I structured the code this way so that we can stop at each step and troubleshoot if necessary. The intermediate results are preserved in files so the entire pipeline doesn't need to be run for later results in the pipeline. Furthermore, dividing the code into functions allows us to optimize the runtime of the function. 
 
