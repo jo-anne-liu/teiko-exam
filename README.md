@@ -1,10 +1,10 @@
 # Teiko Exam for Bioinformatics Engineer
 
 ## Instructions for Running
-1. Add files "cell-count.csv" and "main.py" to GitHub repository.
+1. Add files `cell-count.csv` and `main.py` to GitHub repository.
 2. Launch codespace
-3. Verify that the csv file is in the directory: ls -l *.csv
-4. Run: python main.py path/to/cell-count.csv loblaw_study.db
+3. Verify that the csv file is in the directory: `ls -l *.csv`
+4. Run: `python main.py path/to/cell-count.csv loblaw_study.db`
 5. Outputs will be files `melanoma_samples_per_project.csv`, `melanoma_responders_vs_non.csv`, `melanoma_gender_counts.csv`, `stat_comparison.csv`, `pbmc_boxplot.png`, `frequencies.csv`.
 
 
