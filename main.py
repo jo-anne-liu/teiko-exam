@@ -736,7 +736,6 @@ def main(argv: Tuple[str, ...]) -> None:
 
 
 # Settings – change these paths / values if needed
-# --------------------------------------------------------------
 DB_PATH = pathlib.Path("loblaw_study.db")
 # If your B‑cell column is named differently (e.g. "B_cell"), adjust below
 TARGET_CELL_TYPE = "b_cell"
@@ -772,4 +771,5 @@ else:
     # Round to two decimals as requested
     avg_rounded = round(result, 2)
     # Ensure we always show two digits after the decimal point
+
     print(f"Average B‑cell count for melanoma‑male responders at time = 0: {avg_rounded:.2f}")
