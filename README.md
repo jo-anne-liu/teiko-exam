@@ -82,8 +82,7 @@ main.py
 * Step 2 – compute frequencies, write frequencies.csv.
 * Step 3 – load full DB, filter/clean, run compare_groups, write stat_comparison.csv, save pbmc_boxplot.png.
 * Step 4 – connect to DB, pull melanoma subset, write three CSV summary tables.
-* Step 5 – run the B‑cell query (currently commented out).
-* Print a final “All steps completed” banner.
+* Step 5 – run the B‑cell query.
 
 ### Why is the Code Written this Way?
 * Reproducibility – Every run produces the same set of artefacts (*.db, *.csv, *.png). You can version‑control the script and the generated files become a complete audit trail.
