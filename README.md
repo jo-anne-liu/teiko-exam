@@ -86,9 +86,9 @@ main.py
 
 ### Why is the Code Written this Way?
 * Reproducibility – Every run produces the same set of artefacts (*.db, *.csv, *.png). You can version‑control the script and the generated files become a complete audit trail.
-* Modularity – Want to swap the statistical test? Just change the test= argument in compare_groups. Need a different filter (e.g., another tissue type)? Modify filter_pbmc or add a new filter function without touching the rest of the code.
-* Scalability – The bulk CSV load is wrapped in a single SQLite transaction, which is fast even for millions of rows. Later you could replace the CSV reader with pandas.read_csv for even larger files.
-* Extensibility – Because each part returns a pandas.DataFrame, you can pipe the output into any downstream analysis (machine‑learning models, additional visualisations, export to Excel, etc.).
+* Modularity – To swap the statistical test, just change the `test=` argument in compare_groups. To use a different filter (e.g., another tissue type), modify filter_pbmc or add a new filter function without touching the rest of the code.
+* Scalability – The bulk CSV load is wrapped in a single SQLite transaction, which is fast even for millions of rows. Later you could replace the CSV reader with `pandas.read_csv` for even larger files.
+* Extensibility – Because each part returns a `pandas.DataFrame`, you can pipe the output into any downstream analysis (machine‑learning models, additional visualisations, export to Excel, etc.).
 * Transparency – All SQL statements are explicit strings; you can inspect or log them for debugging or for sharing with collaborators who prefer raw SQL.
 
 
@@ -97,11 +97,11 @@ main.py
 ### Tables and explanations
 * patients: The composite key guarantees uniqueness across projects (the same subject ID could appear in different studies, so we prepend the project name).
 * samples: One row per biological specimen collected from a patient. A patient can contribute many samples (different time points, treatments, tissue types).
-* cell_types:	Master lookup table for every immune‑cell population you ever measure (e.g., b_cell, cd8_t_cell). Adding a new marker only means inserting a new row here.
-* measurements:	The numeric observation: how many cells of a given type were counted in a given sample. The (sample_id, cell_type_id) pair is declared UNIQUE so you never store duplicate counts for the same cell type in the same sample.
+* cell_types: Master lookup table for every immune‑cell population you ever measure (e.g., b_cell, cd8_t_cell). Adding a new marker only means inserting a new row here.
+* measurements: The numeric observation: how many cells of a given type were counted in a given sample. The (sample_id, cell_type_id) pair is declared UNIQUE so you never store duplicate counts for the same cell type in the same sample.
 
 ### Rationale
-* Separate tables (normalization)	eliminates redundancy (e.g., patient age is stored once, not repeated for every cell‑type measurement) and reduces storage, prevents contradictory records, and makes updates trivial.
+* Separate tables (normalization) eliminates redundancy (e.g., patient age is stored once, not repeated for every cell‑type measurement) and reduces storage, prevents contradictory records, and makes updates trivial.
 * Composite patient_id (project_subject) guarantees global uniqueness across projects. If two studies happen to label a subject “001”, the prefix keeps them distinct without needing an artificial surrogate key.
 * SQLite will reject a measurement that refers to a non‑existent sample, and a sample that refers to a non‑existent patient. This protects from accidental typos or incomplete imports.
 * `cell_types` lookup table	decouples the list of markers from the measurements. Adding a new marker (e.g., regulatory_t_cell) is a single INSERT into cell_types; the loading loop automatically discovers the new ID via _cell_type_id. No code changes needed.
