@@ -141,7 +141,7 @@ def load_csv(csv_path: pathlib.Path, db_path: pathlib.Path) -> None:
     # quick sanity‑check
     cur.execute("SELECT COUNT(*) FROM measurements;")
     total_measurements = cur.fetchone()[0]
-    print(f"✅ Loaded {total_measurements:,} measurement rows into {db_path.name}")
+    print(f"Loaded {total_measurements:,} measurement rows into {db_path.name}")
 
     # Show the first few measurement rows (joined view) for verification
     cur.execute(
@@ -773,3 +773,4 @@ else:
     # Ensure we always show two digits after the decimal point
 
     print(f"Average B‑cell count for melanoma‑male responders at time = 0: {avg_rounded:.2f}")
+
